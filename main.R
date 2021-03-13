@@ -13,21 +13,19 @@ source('centralities_correlation.R')
 
 
 NUMBER_CENTRALITY <- 8;
-list_centrality <- c(alpha_centrality, authority_score, closeness ,hub_score, betweenness, degree, page_rank, coreness);
+list_centrality <- c( betweenness, degree, coreness ,eigen_centrality, closeness ,hub_score, page_rank);
 list_graph <- c(barabasi.game,erdos.renyi.game, forest.fire.game);#, watts.strogatz.game);
 G <- c()
 
-NB_TYPE <- 2;
+NB_TYPE <- 100;
 NB_GRAPH <- NB_TYPE*length(list_graph);
 
 for(g in list_graph){
   for(i in 1:NB_TYPE){
-    #print(g);
     G <- c(G,list(creation_graphe_rand(g)));
   }
 }
 
-#print(G)
 centralities_matrix <- c();
 
 for(g in G){
@@ -37,21 +35,40 @@ for(g in G){
   for (centrality in list_centrality) {
     
     centrality_matrix[,i] <- if (is.list(centrality(g))) {centrality(g)$vector;} else {centrality(g);}
-    print(centralities_matrix);
      
     i <- i+1;
   }
-  centralities_matrix <- c(centralities_matrix,centrality_matrix);
+  centralities_matrix <- c(centralities_matrix,list(centrality_matrix));
 }
 
 modified_centralities <- c();
 for(cm in centralities_matrix){
-  modified_centralities <- c(modified_centralities, princomp(cm, scores=TRUE)$score[,1:3]);
+  modified_centralities <- c(modified_centralities, list(princomp(cm, scores=TRUE)$score[,1:3]));
 }
 
-po <- centralities_correlations(modified_centralities);
-print(po[1]);
-plot3d(x=c(0,po[1]),y=c(0,po[2]),z=c(0,po[3]), type = "p", col="red");
+coords <- c();
+for(c in modified_centralities){
+  coord <- centralities_correlations(c);
+  coords <- c(coords,list(coord));
+}
+
+x<-c();
+y<-c();
+z<-c();
+for(c in coords){
+  x <- c(x,c[1]);
+  y <- c(y,c[2]);
+  z <- c(z,c[3]);
+  
+}
+
+print(coords[1])
+
+coords <- matrix(unlist(coords), ncol = 3, byrow = TRUE);
+clusters = kmeans(coords,centers = 3)$cluster;
+palette(rainbow(3));
+
+plot3d(x,y,z, type = "p", col=clusters);
 
 
 
